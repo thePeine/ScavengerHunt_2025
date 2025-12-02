@@ -182,7 +182,6 @@ function closestPoint(x, y) {
     for (var i = 0; i < points.length; i++) {
         var p = points[i];
         var dist = Math.hypot(p.x - x, p.y - y);
-        p.mouseDist = dist;
         if (dist < min) {
             min = dist;
             index = i;
@@ -452,15 +451,10 @@ var onResize = function () { // called from boilerplate
     lines.length = 0;  // remove all lines and points.
     points.length = 0;
     lastChainLink = 0; // controls which chain image to use next
-    holdingCount = 0;
-    holding = -1;
-    mouse.buttonRaw = 0;
 }
 var blockAttached = false;
 var linkAddSpeed = 20;
 var linkAddCount = 0;
-var holding = -1; // the index of the link the mouse has grabbed
-var holdingCount = 0;
 
 function runSim(timer) {
     ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -468,43 +462,21 @@ function runSim(timer) {
     ctx.fillStyle = "black";
     if (points.length > 0) {
 
-        if (mouse.buttonRaw & 1) {
-            if (holding < 0) {
-                holding = closestPoint(mouse.x, mouse.y);
-            }
-        } else {
-            holding = -1;
-        }
-
         movePoints();
         constrainPoints();
-
-        if (holding > -1) {
-            var mousehold = points[holding];
-            mousehold.ox = mousehold.x = mouse.x;
-            mousehold.oy = mousehold.y = mouse.y;
-            holdingCount += 1; // used to hide help;
-        }
-
         for (var i = 0; i < stiffness; i++) {
-            constrainLines();
-            if (holding > -1) {
-                mousehold.ox = mousehold.x = mouse.x;
-                mousehold.oy = mousehold.y = mouse.y;
-            }
+                            constrainLines();
         }
         drawLines();
         drawCanvasLocks();
         drawCanvasKeys(timer);
         drawCanvasDoor();
-    } else {
-        holding = -1;
-    }
+    } 
 }
 
 var doSim = loading;
 
-var w, h, cw, ch, canvas, ctx, mouse, globalTime = 0, firstRun = true;
+var w, h, cw, ch, canvas, ctx, globalTime = 0, firstRun = true;
 
 ; (function () {
     const RESIZE_DEBOUNCE_TIME = 100;
@@ -522,10 +494,10 @@ var w, h, cw, ch, canvas, ctx, mouse, globalTime = 0, firstRun = true;
         if (canvas === undefined) {
             canvas = createCanvas();
         }
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
+        canvas.width = 2000;
+        canvas.height = 1350;
 
-        var horizontalZoom = innerWidth / 1900;
+        var horizontalZoom = innerWidth / 2000;
         var verticalZoom = innerHeight / 1350;
         var smallest = Math.min(verticalZoom, horizontalZoom);
 
@@ -559,53 +531,6 @@ var w, h, cw, ch, canvas, ctx, mouse, globalTime = 0, firstRun = true;
         ctx.textBaseline = "middle";
 
     }
-    mouse = (function () {
-        function preventDefault(e) {
-            e.preventDefault();
-        }
-        var mouse = {
-            x: 0,
-            y: 0,
-            w: 0,
-            buttonRaw: 0,
-            over: false,
-            bm: [1, 2, 4, 6, 5, 3],
-            active: false,
-            bounds: null,
-            mouseEvents: "mousemove,mousedown,mouseup,mouseout,mouseover,mousewheel,DOMMouseScroll".split(",")
-        };
-        var m = mouse;
-        function mouseMove(e) {
-            var t = e.type;
-            m.bounds = m.element.getBoundingClientRect();
-            m.x = e.pageX - m.bounds.left;
-            m.y = e.pageY - m.bounds.top;
-            if (t === "mousedown") {
-                m.buttonRaw |= m.bm[e.which - 1];
-            } else if (t === "mouseup") {
-                m.buttonRaw &= m.bm[e.which + 2];
-            } else if (t === "mouseout") {
-                m.buttonRaw = 0;
-                m.over = false;
-            } else if (t === "mouseover") {
-                m.over = true;
-            } else if (t === "mousewheel") {
-                m.w = e.wheelDelta;
-            } else if (t === "DOMMouseScroll") {
-                m.w = -e.detail;
-            }
-            e.preventDefault();
-        }
-        m.start = function (element) {
-            m.element = element === undefined ? document : element;
-            m.mouseEvents.forEach(n => {
-                m.element.addEventListener(n, mouseMove);
-            });
-            m.element.addEventListener("contextmenu", preventDefault, false);
-            m.active = true;
-        }
-        return mouse;
-    })();
 
     function update(timer) { // Main update loop
         doSim(timer); // call demo code
@@ -614,7 +539,6 @@ var w, h, cw, ch, canvas, ctx, mouse, globalTime = 0, firstRun = true;
     setTimeout(function () {
         document.body.classList.add("bodyLoaded");
         resizeCanvas();
-        mouse.start(canvas, true);
         //window.addEventListener("resize", resizeCanvas);
         requestAnimationFrame(update);
         createSolidChain();
