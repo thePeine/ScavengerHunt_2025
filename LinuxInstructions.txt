@@ -1,0 +1,7 @@
+Copy project from https://dev.azure.com/thepeine/
+open terminal, navigate to directory
+python3 -m http.server 8000
+Open http://localhost:8000
+set zoom to 75%
+F11
+

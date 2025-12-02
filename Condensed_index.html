@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Local Page</title>
+
+    <script type="application/json" id="puzzleData">
+    {
+  "locks": [
+    {
+      "Name": "lightGreenLock",
+      "StartX": 340,
+      "StartY": 50,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "Field Goal",
+      "DarkColor": "#235b3a",
+      "LightColor": "#2aff80"
+    },
+    {
+      "Name": "orangeLock",
+      "StartX": 320,
+      "StartY": 275,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "leela",
+      "LightColor": "gold",
+      "DarkColor": "orange"
+    },
+    {
+      "Name": "tealLock",
+      "StartX": 300,
+      "StartY": 500,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "parade",
+      "DarkColor": "black",
+      "LightColor": "teal"
+    },
+    {
+      "Name": "pinkLock",
+      "StartX": 340,
+      "StartY": 725,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "67",
+      "DarkColor": "red",
+      "LightColor": "pink"
+    },
+    {
+      "Name": "brownLock",
+      "StartX": 320,
+      "StartY": 950,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "star",
+      "DarkColor": "brown",
+      "LightColor": "#C4A484"
+    },
+    {
+      "Name": "purlpeLock",
+      "StartX": 300,
+      "StartY": 1175,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "fall",
+      "DarkColor": "purple",
+      "LightColor": "#C3B1E1"
+    }
+  ]
+}
+
+    </script>
+    <style>
+        html {
+            background: lightgray;
+        }
+
+        .NONEDISPLAY {
+            display: none !important;
+        }
+
+        body {
+            display: none;
+        }
+
+        body.bodyLoaded {
+            display: block;
+        }
+
+        .floatingLock {
+            pointer-events: pointerup;
+        }
+
+        .floatingLock svg {
+            height: 90px;
+            width: 90px;
+            position: absolute;
+            z-index: 1001;
+        }
+
+        #theDoor {
+            height: 1350px;
+            width: 900px;
+            position: absolute;
+            left: 450px;
+        }
+
+        #svgHider {
+            display: none;
+        }
+
+        .editText {
+            position: absolute;
+            z-index: 99999;
+            font-size: 42px;
+            background: transparent;
+            width: 300px;
+            margin-top: -10px;
+            padding-left: 10px;
+            left: 1600px;
+            background: black;
+        }
+
+        .floatingKey {
+            display: none;
+        }
+
+        .floatingKey.keyisactive {
+            display: block;
+        }
+
+        .floatingKey svg {
+            height: 70px;
+            width: 90px;
+            position: absolute;
+            z-index: 1001;
+        }
+
+        #theCandy {
+            width: 900px;
+            position: absolute;
+            left: 450px;
+        }
+    </style>
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", (event) => {
+            console.log("LOADED");
+
+        });
+
+        var points = [];
+        var lines = [];
+        var canvasLocks = [];
+        var canvasKeys = [];
+        var canvasDoor = undefined;
+        var allDoorsUnlocked = false;
+
+        var pointsStart;
+        var fric = 0.95; // drag or air friction
+        var surF = 0.95; // ground and box friction
+        var grav = 0.9;   // gravity
+        var ballRad = 10;  // chain radius set as ball radius
+        var stiffness = 12;  // number of itterations for line constraint
+        const fontSize = 33;
+        var chainImages = [new Image(), new Image()];
+        chainImages[0].src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAAaCAYAAAD43n+tAAAHJElEQVRYhcWYbUyT6xnH/+0K46VZCMKYVgkoJEsAdwJofJ1Zogd9oK318FJbCgaDa3ybCSWZmSF8ULQkvqESPzjAVMVQQd5aobwJo+WlyZYl7uyLzhN3dkRAEI7yIo7/PtDHVA8ctwzhSv4fmud+el+/+76u677uB/iERUdHfxESEnIhIiKiWS6XP5JKpY8BPFkqSaXSNwCGATwCcBvAnk/5PK/t3LlTHR4e3unv7z8NgMupwMDAKa/fMwCcAHb/VyAJCQk+kZGRNwMCAqYAMDExcbqgoOBVVVXVRENDwzOXyzXZ0NDw/OHDh6Nut5v/r1wu16TNZntis9metLS0fLfQuPr6+mGz2fwyMTFx0gP2BoD5R2HWr1//8/DwcCcAyuXy6XPnzo24XK5pt9vNnp4ednV10W63s6qqinfu3OHt27cXVffu3WNrayt7enoWXICurq5po9H4LYBZj/44LwxJSUREhAsAN27cOGG1Wgc9K0iHw8GbN2/y7NmzNJlMNBqNzMrKol6vp06nWzRptVoeOHCAhYWFrK6uptPpnBeqs7OTBQUFzwGI6XDxB0AKhaICABUKxaumpqbXbrebHR0drK6uZnFxMU+cOMHU1FQKgsB9+/YxIyODKpVqIDk5eSglJWXkf1FycvJ7ffwsKSlpdseOHSNKpZJFRUV0OBzs7+//AKi/v582m40mk2nQs0uTAFLfw6xdu3afn5/flEwmm7VYLC/cbjfb29tptVp55swZZmdnUxAEarVapqenv960adMYgEF8xkIAYDwmJub748ePj9pstnl3yWKxMCkp6YVn/F/fA4WFhXUDoMlkGnG73ezu7mZ9fT0vXrxIg8HA5ORkarXaifj4+NGPJn0L4B8A/onFLddPxTkkEslsRkbGUFNT07Q3UE9PD+/fv8+CgoKZFStWiKH3O0RGRn4pk8lm/Pz83jU1NY273W62tLTQYrHw2LFjFASBqampYytXrhzzgugA8FsA0nkTcnHsVwDKAYwD4N69e193d3e/9Q47u93OkpISJiYmfufxrQ/h4eHlAKjX64fcbjf7+vrY2NjI0tJSpqenU6VSTUZHR4swAwAOfkaI+ezXAL4GwMOHDz/33iWHw8EbN25QpVKNYS6XJhAUFPRnACwpKRkRgerr61lcXEyVSsUtW7a89MC8ArBziWEAAL6+vr/08fF5JpFIaLVah0Wg9vZ2WiwWarVaBgcHz/kpl8sHALCuru61N9D58+cpCAJXrVolJv+55YARLTQ09Cjm8nxcBGptbWVlZSUzMzMZFRU1BIDw8fGZAcDGxsan3rF55coVKpVKYq7WjwLwXU4gAJDL5cPbtm177h1yZWVl1Ol0jI2NnStYEomEAD4oiW1tbayoqKBWqyWAd5irPMtucrn8uUKheCZGkt1uZ2lpKdPS0hgfHz9XeaVS6QwA2my2p179Fa1WK/Pz8xkcHDyEubK8rBYVFfWlVCqdFXfI6XSytraWZrOZarWaUVFR38ATch/kkHd8Xr9+ndu3bxcrnGE5gVavXn0fAI8cOTIsRtHdu3eZl5fHPXv2MDIy8hUAwtfX9y8AePny5Zcftxd2u535+fniSfx3AD9dDpiYmJgjvr6+0xKJhBaLZbC3t5d2u53Xrl2jXq+nIAiT8JxXAFABgJmZmYPzNYJtbW1Uq9UiVB+AiKWEWbdu3R8CAwPfAKDRaBwTfaqsrOTJkyeZkpLCXbt2iZX4W2DuovTOz8/v3YMHD8bng2pubh7ZvHmzeB4NSKXSkqCgoKDPBZGWlvaT0NDQ34eEhLilUikBUKvVzrhcrn93dnaypqaGZrOZWq2WGo2GsbGxAx7fbov/4QTAo0ePjvb19c3bsjscjpdGo1HMJ/r4+Lz19/d/HBAQ8LfAwMBHi6WgoKBvZDLZO3EemUzGvLy8UafTOdPV1cXa2lpeuHCBBw8epFKppEajERf6ewBfiED7AEzJZLLZS5cuvfixC9atW7deGgyGwYCAgLfipIstqVRKhUIxnJ+fP1JXV/eqv7+fHR0dtFqtNJvNzM3NpVKppE6nG1coFMOe935w0asAwIiIiOmioqI3zc3N7O3tXRDM6XRO1dXVTdXW1nKx5XA4hsSOWryTXb16ladOnaLBYKBarWZ2dvZUXFycmDtfAwiYL3xdABgSEvJGqVQOFhYWsqysjDU1NWxsbKTNZlsSVVdXs7y8nCUlJTx9+jRNJhNzcnKoUqm4f/9+ZmVlTcTFxYlXmX8B2LhQPv4MwJ88A6cTEhImBEGYzsjIYE5ODg8dOrRkys3NZWpqKtVqNTUaDXU6HXNycqYEQRhas2aNGO6PAfxmIRjRpJ54nATAsLCwqQ0bNowIgjCu0WgG9Ho9l0oGg4Hp6emTu3fvHty6desY5jp+8VNWPYBffArG21IAtAHw/ia23BoH4ADw1UJO/wciviDWdWkWegAAAABJRU5ErkJggg==';
+        chainImages[1].src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAAKCAYAAADhNJ24AAADZ0lEQVRIic3Vz0tqaRgH8EcxQpGgTbq4LgJbBkkkoVADRdBGyfLXMY+oVDDRolplaUmLNtGEtCmulWlQHfxV2i9Njf6EVrOY7Z1dM8Mwtzu38juL6ZzxR93uncUwBz6b8z7v877PeV/OQ/T38x0RvSeiW4lEct/Q0ACxWAwi+l9ramp66f0dEf1IRN8/10YMEd2JRCI0NzeX9Xr9g9Fo/Gg2mz8bDIYng8EAlmXhdDrhcDiqMAwDhmFgt9tht9ths9lgs9lgtVrfxMfabDZhPp+vEj/2kpmZGXg8HjAMA5fL9atarf5FKpWWRSIRiOiRiDaIiG5lMhm6urrKFovl0/z8/O+hUOi3ra2tTxsbGzg8PMTNzQ2ur6/rlEollEolFItFFItFFAoFFAoFXF1dIZ/P4/LyEhcXFzg7O8Pp6SkymQxOTk5wfHyMdDqNVCqFVCqFZDKJRCKBeDyOeDyORCKBRCKBZDKJZDIpxKXT6SrxeFxY4/z8/HFtbe1no9F49+7dO77IMhHRB5VKBYZhysFg8GFnZ+czx3GPHMc9HR0dIZvNCpv+knw+XyWXyyGXy1VuQCiUl81mBZlM5kWVMbU4jgPHcTg4OEAsFiuvr6//OT09/YfJZPrY1tbGX1n6SaFQYGhoCAsLC9jc3MT29jbC4TDC4TAikQj29/ffFIvF6kSjUUSjUezt7QkikUiV3d3dfy0UCmF1dRUrKytYXl6G3+9/mpqaejCbzQ9qtVooEI2NjdBoNDCbzfB6vZiZmcHc3Bx8Ph98Ph8CgQCCwSCWlpbqLC4uVgkEAnVqY75GbQ6/319ndnYWk5OTGBsbw/j4OCYmJuBwOKDX6yGXy/85QSJCS0sLdDodBgcHYTKZ4HA4wLIsWJaF2+2G1+t9kcfjqeJ2u6tUjr2W4628tTl5TqdTwDAMhoeH0dfXB5VKVdkF6JaIIBaLoVQq0dnZiYGBAYyMjMBisVT9tUZHR+vwC/Afg2VZuFyuKpVjL6mN/9q5VqtVKK6/vx8dHR1obW2FTCarbBvEENEHvkipVAqFQgGNRoPu7m7odDrodDro9Xr09PS8qre39z+n1Wqh1WrR3t4OpVIJuVwOqVTKn979c28XnvfPTVKoXiKRfFPDF4lErxKLxd/sS/me20Ct++cb+QNf1F9RN1mz/wHvKAAAAABJRU5ErkJggg==';
+
+        var gameData = [];
+
+        function drawCanvasDoor() {
+            if (canvasDoor != undefined) {
+                canvasDoor.draw();
+            }
+        }
+
+        function createCanvasDoor() {
+            var door = document.getElementById("theDoor");
+            var doorImage = new Image();
+            const svgDataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(door.innerHTML.trim());
+            doorImage.src = svgDataUri;
+
+            canvasDoor = {
+                isOpening: false,
+                image: doorImage,
+                angleY: 0,
+                isDone: false,
+                draw() {
+                    if (!this.isDone && this.image && this.isOpening) {
+                        const position = { x: 450, y: 0 };
+                        // In degrees
+                        const rotation = { x: 0, y: this.angleY, z: 0 };
+                        // Rotation relative to here (this is the center of the image)
+                        const rotPt = { x: 0, y: this.image.height / 2 };
+
+                        ctx.save();
+                        ctx.setTransform(new DOMMatrix()
+                            .translateSelf(position.x + rotPt.x, position.y + rotPt.y)
+                            .rotateSelf(rotation.x, rotation.y, rotation.z)
+                        );
+                        ctx.drawImage(this.image, -rotPt.x, -rotPt.y);
+                        ctx.restore();
+                        this.angleY -= .5;
+                        if (this.angleY <= -90) {
+                            this.isDone = true;
+                            var candyElement = document.getElementById("theCandy");
+                            candyElement.className = "animate__animated animate__backInDown"
+                        }
+                    }
+
+                }
+            };
+        }
+        // add a point
+        function addPoint(x, y, vx, vy, rad = 10, fixed = false) {
+            points.push({
+                x: x,
+                y: y,
+                ox: x - vx,
+                oy: y - vy,
+                fixed: fixed,
+                radius: rad,
+            })
+            return points[points.length - 1];
+        }
+        // add a constrained line
+        function addLine(p1, p2, image) {
+            lines.push({
+                p1, p2, image,
+                len: Math.hypot(p1.x - p2.x, p1.y - p2.y),
+                draw() {
+                    if (this.image !== undefined) {
+                        var img = chainImages[this.image];
+                        var xdx = this.p2.x - this.p1.x;
+                        var xdy = this.p2.y - this.p1.y;
+                        var len = Math.hypot(xdx, xdy);
+                        xdx /= len;
+                        xdy /= len;
+                        if (this.image === 2) { // oops block drawn in wrong direction. Fix just rotate here
+                            // also did not like the placement of 
+                            // the block so this line's image
+                            // is centered on the lines endpoint
+                            ctx.setTransform(xdx, xdy, -xdy, xdx, this.p2.x, this.p2.y);
+
+                            ctx.rotate(-Math.PI / 2);
+                        } else {
+                            ctx.setTransform(xdx, xdy, -xdy, xdx, (this.p1.x + this.p2.x) / 2, (this.p1.y + this.p2.y) / 2);
+                        }
+
+                        ctx.drawImage(img, -img.width / 2, - img.height / 2);
+
+                    }
+                }
+            })
+            return lines[lines.length - 1];
+        }
+        // Constrain a point to the edge of the canvas
+        function constrainPoint(p) {
+            if (p.fixed) {
+                return;
+            }
+            var vx = (p.x - p.ox) * fric;
+            var vy = (p.y - p.oy) * fric;
+            var len = Math.hypot(vx, vy);
+            var r = p.radius;
+            if (p.y <= r) {
+                p.y = r;
+                p.oy = r + vy * surF;
+            }
+            if (p.y >= h - r) {
+                var c = vy / len
+                p.y = h - r
+                p.oy = h - r + vy * surF;
+                p.ox += c * vx;
+            }
+            if (p.x < r) {
+                p.x = r;
+                p.ox = r + vx * surF;
+            }
+            if (p.x > w - r) {
+                p.x = w - r;
+                p.ox = w - r + vx * surF;
+            }
+        }
+        // move a point 
+        function movePoint(p) {
+            if (p.fixed) {
+                return;
+            }
+            var vx = (p.x - p.ox) * fric;
+            var vy = (p.y - p.oy) * fric;
+            p.ox = p.x;
+            p.oy = p.y;
+            p.x += vx;
+            p.y += vy;
+            p.y += grav;
+        }
+        // move a line's end points constrain the points to the lines length
+        function constrainLine(l) {
+            var dx = l.p2.x - l.p1.x;
+            var dy = l.p2.y - l.p1.y;
+            var ll = Math.hypot(dx, dy);
+            var fr = ((l.len - ll) / ll) / 2;
+            dx *= fr;
+            dy *= fr;
+            if (l.p2.fixed) {
+                if (!l.p1.fixed) {
+                    l.p1.x -= dx * 2;
+                    l.p1.y -= dy * 2;
+                }
+            } else if (l.p1.fixed) {
+                if (!l.p2.fixed) {
+                    l.p2.x += dx * 2;
+                    l.p2.y += dy * 2;
+                }
+            } else {
+                l.p1.x -= dx;
+                l.p1.y -= dy;
+                l.p2.x += dx;
+                l.p2.y += dy;
+            }
+        }
+
+        // locate the poitn closest to x,y (used for editing)
+        function closestPoint(x, y) {
+            var min = 40;
+            var index = -2;
+            for (var i = 0; i < points.length; i++) {
+                var p = points[i];
+                var dist = Math.hypot(p.x - x, p.y - y);
+                p.mouseDist = dist;
+                if (dist < min) {
+                    min = dist;
+                    index = i;
+
+                }
+
+            }
+            return index;
+        }
+
+        function constrainPoints() {
+            for (var i = 0; i < points.length; i++) {
+                constrainPoint(points[i]);
+            }
+        }
+        function movePoints() {
+            for (var i = 0; i < points.length; i++) {
+                movePoint(points[i]);
+            }
+        }
+        function constrainLines() {
+            for (var i = 0; i < lines.length; i++) {
+                constrainLine(lines[i]);
+            }
+        }
+        function drawLines() {
+            // draw back images first
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].image !== 1) {
+                    lines[i].draw();
+                }
+            }
+            for (var i = 0; i < lines.length; i++) {
+                if (lines[i].image === 1) {
+                    lines[i].draw();
+                }
+            }
+        }
+
+        function drawCanvasLocks() {
+            var doosLockedCount = 0;
+            for (var i = 0; i < canvasLocks.length; i++) {
+                if (canvasLocks[i].image !== undefined) {
+                    canvasLocks[i].draw();
+
+                    if (canvasLocks[i].lockContext.IsLocked) {
+                        doosLockedCount++;
+                    }
+                }
+            }
+
+            if (!allDoorsUnlocked && doosLockedCount == 0) {
+                allDoorsUnlocked = true;
+                canvasDoor.isOpening = true;
+                var door = document.getElementById("theDoor");
+                door.parentElement.removeChild(door);
+            }
+        }
+
+        function drawCanvasKeys(timer) {
+            var toRemoveIndexes = [];
+            for (var i = 0; i < canvasKeys.length; i++) {
+                if (canvasKeys[i].image !== undefined) {
+                    canvasKeys[i].draw(timer);
+
+                    if (canvasKeys[i].completed) {
+                        toRemoveIndexes.push(i);
+                    }
+                }
+            }
+
+            for (var i = toRemoveIndexes.length - 1; i >= 0; i--) {
+                canvasKeys.splice(i, 1);
+            }
+        }
+
+        function createHorizontalChain(startX, startY, numLinks) {
+            var i = chainImages[1];
+            var w = i.width;
+            var h = i.height;
+
+            var localPoints = [];
+            localPoints[0] = addPoint(startX, startY, 0, 0, 8, true);
+
+            for (let i = 1; i < numLinks; i++) {
+                var xOffset = ((i) * .6) * w;
+                localPoints[i] = addPoint(startX + xOffset, startY, 0, 1, 10, i == numLinks - 1);
+            }
+
+            for (let i = 0; i < localPoints.length - 1; i++) {
+                addLine(localPoints[i], localPoints[i + 1], (i) % 2);
+            }
+
+            localPoints[0].x -= 50;
+        }
+
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+
+        function AddCanvasKey(keyIndex, destinationX, destinationY, lockContext) {
+
+            canvasKeys.push({
+                completed: false,
+                image: chainImages[keyIndex],
+                x: 0,
+                y: 0,
+                destX: destinationX,
+                destY: destinationY,
+                startTime: null,
+                lock: lockContext,
+
+                draw(timer) {
+                    if (!this.startTime) this.startTime = timer;
+                    const progress = (timer - this.startTime) / 1500;
+                    var img = this.image;
+
+                    if (progress < 1) {
+                        if (img) {
+                            ctx.setTransform(1, 0, 0, 1, 0, 0);
+                            ctx.drawImage(img, this.x, this.y);
+
+                            this.x = this.destX * easeInOutQuad(progress);
+                            this.y = this.destY * easeInOutQuad(progress);
+                        }
+                    }
+                    else if (this.completed) {
+                        this.y += 8;
+                    }
+                    else if (!this.completed) {
+                        this.completed = true;
+                        this.lock.IsLocked = false;
+                        points[this.lock.breakChainRightIdx].fixed = false;
+                        points[this.lock.breakChainLeftIdx].fixed = false;
+                    }
+                }
+            });
+        }
+
+        function createLock(lockData) {
+
+            var left = lockData.StartX + 550;
+            var top = lockData.StartY;
+            var id = lockData.Name;
+
+            var svgLockToCopy = document.getElementById("svgLock");
+
+            var replacedColor = svgLockToCopy.outerHTML.replaceAll("#2aff80", lockData.LightColor);
+            replacedColor = replacedColor.replaceAll("#235b3a", lockData.DarkColor);
+
+            var newCanvasLockImage = new Image();
+            const svgDataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(replacedColor);
+            newCanvasLockImage.src = svgDataUri;
+
+            var svgKeyToCopy = document.getElementById("svgKey");
+            var replacedKeyColor = svgKeyToCopy.outerHTML.replaceAll("#bc3535", lockData.LightColor);
+            var newCanvasKeyImage = new Image();
+            var svgDataUriKey = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(replacedKeyColor);
+            newCanvasKeyImage.src = svgDataUriKey;
+            chainImages.push(newCanvasKeyImage);
+
+            canvasLocks.push({
+                image: newCanvasLockImage,
+                lockContext: lockData,
+                xLoc: left,
+                yLoc: top,
+                keyIndex: chainImages.length - 1,
+                keyPoint1: undefined,
+                keyPoint2: undefined,
+                draw() {
+                    var img = this.image;
+                    var associatedTextElement = document.getElementById(this.lockContext.Name);
+
+                    if (!this.lockContext.KeyShown && associatedTextElement.innerText.toLowerCase() === this.lockContext.CorrectCode.toLowerCase()) {
+                        this.lockContext.KeyShown = true;
+                        AddCanvasKey(this.keyIndex, this.xLoc, this.yLoc, this.lockContext);
+                    }
+
+                    if (img) {
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                        ctx.drawImage(img, this.xLoc, this.yLoc);
+
+                        if (this.keyPoint1 != undefined && this.keyPoint2 != undefined) {
+                            if (Math.abs(this.keyPoint1.x - this.xLoc) < 10 && Math.abs(this.keyPoint1.y - this.yLoc) < 10) {
+                                this.unlocked = true;
+                            }
+                        }
+                        if (!this.lockContext.IsLocked) {
+                            this.yLoc += 8;
+                        }
+                    }
+                }
+            });
+
+            var lockText = document.createElement("div");
+            lockText.id = id;
+            lockText.contentEditable = "true";
+            lockText.classList.add("editText")
+            lockText.innerText = "";
+            lockText.style.top = (top) + 'px';
+            lockText.style.color = lockData.LightColor;
+            lockText.style.border = '1px solid ' + lockData.LightColor;
+            document.body.appendChild(lockText);
+        }
+
+        function createSolidChain() {
+
+            const puzzleDataElement = document.getElementById("puzzleData");
+            gameData = JSON.parse(puzzleDataElement.textContent);
+
+            for (let i = 0; i < gameData.locks.length; i++) {
+
+                createHorizontalChain(gameData.locks[i].StartX, gameData.locks[i].StartY, gameData.locks[i].NumLinks);
+
+                var numLinksAfterFirstChain = points.length - 1;
+                createHorizontalChain(gameData.locks[i].StartX + 600, gameData.locks[i].StartY, gameData.locks[i].NumLinks);
+
+                gameData.locks[i].breakChainRightIdx = numLinksAfterFirstChain;
+                gameData.locks[i].breakChainLeftIdx = numLinksAfterFirstChain + 1;
+
+                createLock(gameData.locks[i]);
+            }
+            console.log(gameData);
+        }
+
+        var lastChainLink = 0;
+
+        function addChainLink() {
+            var lp = points[points.length - 1];
+            addPoint(lp.x, lp.y - (chainImages[0].width - ballRad * 2), 0, 0, ballRad);
+            addLine(points[points.length - 2], points[points.length - 1], lastChainLink % 2);
+            lastChainLink += 1;
+        }
+
+        function loading() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0)
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = "black";
+            ctx.fillText("Loading media pleaase wait!!", w / 2, 30);
+            if (chainImages.every(image => image.complete)) {
+                doSim = runSim;
+            }
+        }
+        var onResize = function () { // called from boilerplate
+            blockAttached = false;
+            lines.length = 0;  // remove all lines and points.
+            points.length = 0;
+            lastChainLink = 0; // controls which chain image to use next
+            holdingCount = 0;
+            holding = -1;
+            mouse.buttonRaw = 0;
+        }
+        var blockAttached = false;
+        var linkAddSpeed = 20;
+        var linkAddCount = 0;
+        var holding = -1; // the index of the link the mouse has grabbed
+        var holdingCount = 0;
+
+        function runSim(timer) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0)
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = "black";
+            if (points.length > 0) {
+
+                if (mouse.buttonRaw & 1) {
+                    if (holding < 0) {
+                        holding = closestPoint(mouse.x, mouse.y);
+                    }
+                } else {
+                    holding = -1;
+                }
+
+                movePoints();
+                constrainPoints();
+
+                if (holding > -1) {
+                    var mousehold = points[holding];
+                    mousehold.ox = mousehold.x = mouse.x;
+                    mousehold.oy = mousehold.y = mouse.y;
+                    holdingCount += 1; // used to hide help;
+                }
+
+                for (var i = 0; i < stiffness; i++) {
+                    constrainLines();
+                    if (holding > -1) {
+                        mousehold.ox = mousehold.x = mouse.x;
+                        mousehold.oy = mousehold.y = mouse.y;
+                    }
+                }
+                drawCanvasDoor();
+                drawLines();
+                drawCanvasLocks();
+                drawCanvasKeys(timer);
+            } else {
+                holding = -1;
+            }
+        }
+
+        var doSim = loading;
+
+        var w, h, cw, ch, canvas, ctx, mouse, globalTime = 0, firstRun = true;
+
+        ; (function () {
+            const RESIZE_DEBOUNCE_TIME = 100;
+            var createCanvas, resizeCanvas, setGlobals, resizeCount = 0;
+            createCanvas = function () {
+                var c, cs;
+                cs = (c = document.createElement("canvas")).style;
+                cs.position = "absolute";
+                cs.top = cs.left = "0px";
+                cs.zIndex = 1000;
+                document.body.appendChild(c);
+                return c;
+            }
+            resizeCanvas = function () {
+                if (canvas === undefined) {
+                    canvas = createCanvas();
+                }
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+
+                        var horizontalZoom = innerWidth / 1900;
+        var verticalZoom = innerHeight / 1350;
+        var smallest = Math.min(verticalZoom, horizontalZoom);
+
+        document.body.style.zoom = smallest.toString();
+
+                ctx = canvas.getContext("2d");
+                if (typeof setGlobals === "function") {
+                    setGlobals();
+                }
+                if (typeof onResize === "function") {
+                    if (firstRun) {
+                        onResize();
+                        firstRun = false;
+                    } else {
+                        resizeCount += 1;
+                        setTimeout(debounceResize, RESIZE_DEBOUNCE_TIME);
+                    }
+                }
+            }
+            function debounceResize() {
+                resizeCount -= 1;
+                if (resizeCount <= 0) {
+                    onResize();
+                }
+            }
+            setGlobals = function () {
+                cw = (w = canvas.width) / 2;
+                ch = (h = canvas.height) / 2;
+                ctx.font = fontSize + "px arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+            }
+            mouse = (function () {
+                function preventDefault(e) {
+                    e.preventDefault();
+                }
+                var mouse = {
+                    x: 0,
+                    y: 0,
+                    w: 0,
+                    buttonRaw: 0,
+                    over: false,
+                    bm: [1, 2, 4, 6, 5, 3],
+                    active: false,
+                    bounds: null,
+                    mouseEvents: "mousemove,mousedown,mouseup,mouseout,mouseover,mousewheel,DOMMouseScroll".split(",")
+                };
+                var m = mouse;
+                function mouseMove(e) {
+                    var t = e.type;
+                    m.bounds = m.element.getBoundingClientRect();
+                    m.x = e.pageX - m.bounds.left;
+                    m.y = e.pageY - m.bounds.top;
+                    if (t === "mousedown") {
+                        m.buttonRaw |= m.bm[e.which - 1];
+                    } else if (t === "mouseup") {
+                        m.buttonRaw &= m.bm[e.which + 2];
+                    } else if (t === "mouseout") {
+                        m.buttonRaw = 0;
+                        m.over = false;
+                    } else if (t === "mouseover") {
+                        m.over = true;
+                    } else if (t === "mousewheel") {
+                        m.w = e.wheelDelta;
+                    } else if (t === "DOMMouseScroll") {
+                        m.w = -e.detail;
+                    }
+                    e.preventDefault();
+                }
+                m.start = function (element) {
+                    m.element = element === undefined ? document : element;
+                    m.mouseEvents.forEach(n => {
+                        m.element.addEventListener(n, mouseMove);
+                    });
+                    m.element.addEventListener("contextmenu", preventDefault, false);
+                    m.active = true;
+                }
+                return mouse;
+            })();
+
+            function update(timer) { // Main update loop
+                doSim(timer); // call demo code
+                requestAnimationFrame(update);
+            }
+            setTimeout(function () {
+                document.body.classList.add("bodyLoaded");
+                resizeCanvas();
+                mouse.start(canvas, true);
+                //window.addEventListener("resize", resizeCanvas);
+                requestAnimationFrame(update);
+                createSolidChain();
+                createCanvasDoor();
+                setTimeout(function () {
+                    shakeDoorPeriodically();
+                }, 2000);
+            }, 1000);
+
+            function shakeDoorPeriodically() {
+                var door = document.getElementById("theDoor");
+                if (!door) {
+                    return;
+                }
+
+                door.className = "";
+
+                setTimeout(function () {
+                    var animClassNames = ["animate__wobble", "animate__heartBeat", "animate__jello"]
+                    var animIndex = Math.floor(Math.random() * animClassNames.length);
+                    door.className = "animate__animated  " + animClassNames[animIndex];
+                }, 100);
+
+                setTimeout(function () {
+                    shakeDoorPeriodically();
+                }, 5000);
+            }
+        })();
+
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+</head>
+
+<body>
+    <div id="svgHider">
+
+        <svg version="1.1" width="50" height="50" viewBox="0 0 256 256" xml:space="preserve" id="svgKey"
+            sodipodi:docname="key-920.svg" inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+            xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+            xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg"
+            xmlns:svg="http://www.w3.org/2000/svg">
+            <defs id="defs1" />
+            <g style="opacity:1;fill:none;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none"
+                transform="matrix(2.8433286,0,0,2.81,-0.70024407,1.4065934)" id="g1">
+                <path class="myFill"
+                    d="m 79.191,90.023 c -0.78,0 -1.526,-0.307 -2.084,-0.865 l -8.425,-8.424 c -0.624,-0.626 -0.934,-1.487 -0.851,-2.365 l 0.401,-4.212 -2.609,0.508 c -0.879,0.157 -1.779,-0.088 -2.457,-0.678 -0.677,-0.589 -1.047,-1.441 -1.013,-2.338 l 0.161,-4.256 -4.619,0.688 c -0.914,0.132 -1.848,-0.183 -2.5,-0.836 l -4.44,-4.439 c -0.708,-0.71 -1.007,-1.717 -0.801,-2.694 l 0.839,-4.011 -3.977,0.875 c -0.981,0.207 -1.985,-0.094 -2.692,-0.801 l -3.29,-3.29 C 30.113,58.216 16.939,56.118 8.424,47.602 -2.542,36.636 -2.542,18.792 8.424,7.826 19.389,-3.14 37.234,-3.14 48.2,7.826 c 8.246,8.247 10.512,20.702 5.797,31.303 l 35.339,35.338 c 0.557,0.557 0.864,1.298 0.864,2.087 v 9.641 c 0,1.509 -1.132,2.771 -2.632,2.934 l -8.055,0.875 c -0.107,0.013 -0.215,0.019 -0.322,0.019 z M 68.271,71.208 c 0.734,0 1.438,0.273 1.991,0.782 0.684,0.631 1.026,1.524 0.937,2.45 l -0.401,4.21 8.416,8.399 8.004,-0.881 V 76.554 L 50.397,39.747 50.867,38.79 c 4.743,-9.66 2.824,-21.255 -4.774,-28.854 -9.804,-9.804 -25.757,-9.803 -35.56,0 -9.804,9.804 -9.804,25.756 0,35.56 7.849,7.849 20.129,9.598 29.865,4.257 l 0.98,-0.539 4.855,4.854 3.985,-0.847 c 0.979,-0.208 1.985,0.094 2.691,0.801 0.707,0.707 1.007,1.713 0.803,2.691 l -0.839,4.014 4.431,4.412 4.628,-0.666 c 0.87,-0.123 1.739,0.144 2.39,0.732 0.65,0.586 1.005,1.426 0.972,2.301 l -0.161,4.256 2.609,-0.505 c 0.176,-0.033 0.354,-0.049 0.529,-0.049 z M 22.452,27.983 c -2.142,0 -4.284,-0.816 -5.914,-2.446 -3.261,-3.261 -3.261,-8.567 0,-11.828 3.261,-3.26 8.567,-3.26 11.828,0 3.261,3.261 3.261,8.567 0,11.828 -1.631,1.631 -3.773,2.446 -5.914,2.446 z m 0,-13.74 c -1.379,0 -2.757,0.525 -3.806,1.574 -2.099,2.099 -2.099,5.514 0,7.612 2.099,2.098 5.512,2.099 7.612,0 2.099,-2.099 2.099,-5.514 0,-7.612 -1.05,-1.049 -2.428,-1.574 -3.806,-1.574 z"
+                    style="opacity:1;fill:#bc3535;fill-rule:nonzero;stroke:none;stroke-width:1.00013614;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;fill-opacity:1"
+                    stroke-linecap="round" id="path1" />
+                <path class="myFill"
+                    style="fill:#bc3535;fill-opacity:1;stroke:#bc3535;stroke-width:0.797479;stroke-dasharray:none;stroke-opacity:1"
+                    d="m 212.66755,234.05561 -11.911,-11.78901 0.62301,-6.47655 c 0.61759,-6.4201 0.59732,-7.55071 -0.16848,-9.39717 -0.59389,-1.43195 -2.75642,-3.57802 -4.2494,-4.21705 -2.29795,-0.98358 -3.49686,-0.99968 -8.06758,-0.10834 l -4.19901,0.81885 0.20327,-6.57515 c 0.1719,-5.56032 0.13509,-6.80968 -0.23849,-8.09475 -0.87298,-3.00296 -3.98738,-5.48921 -7.2053,-5.75206 -0.97062,-0.0793 -4.15059,0.24925 -8.3366,0.86127 l -6.76743,0.98944 -5.92679,-5.82174 c -3.25973,-3.20195 -6.08971,-5.96428 -6.28886,-6.13851 -0.29167,-0.25518 -0.11339,-1.47995 0.91681,-6.29847 0.70338,-3.28993 1.27888,-6.46339 1.27888,-7.05213 0,-2.99347 -2.12687,-6.25442 -4.93092,-7.56019 -2.08064,-0.96889 -4.21394,-0.87499 -10.50222,0.46225 -2.91541,0.61998 -5.49116,1.12286 -5.72389,1.11752 -0.23272,-0.005 -3.52767,-3.03169 -7.3221,-6.72521 l -6.89897,-6.71548 -3.96164,2.02493 c -8.30839,4.2467 -15.967046,6.5621 -25.259711,7.63661 -4.84629,0.56038 -13.690975,0.42531 -18.142075,-0.27706 C 56.23652,146.86064 44.6397,141.83487 34.745793,133.86743 9.7713702,113.75583 1.6061101,79.79652 14.70273,50.508335 19.958684,38.75436 29.107794,28.051248 40.213479,20.664516 63.672464,5.0612227 95.305296,4.9428689 118.89982,20.370112 c 4.09085,2.67479 7.20396,5.16104 10.68679,8.534873 11.51698,11.156541 18.62572,25.188926 20.94078,41.336337 0.71602,4.994178 0.6548,13.726478 -0.1325,18.900276 -1.10239,7.244481 -3.10566,13.760042 -6.28661,20.446952 l -1.67509,3.52133 8.96853,8.88431 c 19.893,19.70621 33.16184,32.82177 54.9498,54.31503 12.56727,12.39729 26.88121,26.54367 31.80875,31.43641 l 8.95917,8.89588 -0.0732,13.3968 -0.0732,13.3968 -10.71956,1.18636 c -5.89575,0.6525 -10.93451,1.19464 -11.19722,1.20476 -0.26593,0.0102 -5.75752,-5.20738 -12.38867,-11.77062 z M 68.586423,79.52261 C 79.374937,77.068815 86.914212,67.698598 86.946032,56.704293 86.955939,53.28114 86.543735,50.918778 85.4339,48.038136 82.62898,40.757812 75.969922,35.124547 68.12562,33.396103 65.470278,32.811014 59.838839,32.956989 57.123967,33.68128 46.871233,36.416572 39.915229,44.852878 39.306593,55.290358 38.498425,69.149541 50.12988,80.78521 64.107692,80.100451 c 1.358625,-0.06656 3.374052,-0.326586 4.478731,-0.577841 z"
+                    id="path2" transform="matrix(0.35170047,0,0,0.35587189,0.24627617,-0.50056705)" />
+            </g>
+        </svg>
+
+
+        <svg width="120px" height="120px" viewBox="0 0 90 90" version="1.1" id="svgLock"
+            xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+            xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg"
+            xmlns:svg="http://www.w3.org/2000/svg">
+            <sodipodi:namedview id="namedview1" pagecolor="#ffffff" bordercolor="#000000" borderopacity="0.25" />
+            <defs id="defs1">
+                <linearGradient>
+                    <stop style="stop-color:#b380ff;stop-opacity:1;" offset="0" id="stop2" />
+                </linearGradient>
+            </defs>
+            <g>
+                <rect class="lightColorFill" style="fill:#2aff80;stroke-width:0.264583" id="rect1" width="41.072727"
+                    height="28.800001" x="10.8" y="28.800001" rx="5" ry="5" />
+            </g>
+            <g>
+                <path class="lightColorStroke"
+                    style="fill:#2aff80;fill-opacity:0;stroke:#2aff80;stroke-width:2.57996;stroke-dasharray:none;stroke-opacity:1"
+                    id="path12" sodipodi:type="arc" sodipodi:cx="31.09091" sodipodi:cy="28.137999"
+                    sodipodi:rx="16.519773" sodipodi:ry="26.003271" sodipodi:start="3.1466914" sodipodi:end="6.2718006"
+                    sodipodi:arc-type="slice"
+                    d="M 14.571351,28.005415 A 16.519773,26.003271 0 0 1 31.038989,2.1348559 16.519773,26.003271 0 0 1 47.609613,27.841965 L 31.09091,28.137999 Z" />
+            </g>
+            <g>
+                <path class="darkColorStroke"
+                    style="fill:#235b3a;fill-opacity:1;stroke:#235b3a;stroke-width:2.565;stroke-dasharray:none;stroke-opacity:1"
+                    id="path13" sodipodi:type="arc" sodipodi:cx="31.09091" sodipodi:cy="38.045452"
+                    sodipodi:rx="5.7272725" sodipodi:ry="5.4818182" sodipodi:start="1.5707818" sodipodi:end="1.5051926"
+                    sodipodi:arc-type="slice"
+                    d="m 31.090993,43.52727 a 5.7272725,5.4818182 0 0 1 -5.726584,-5.391855 5.7272725,5.4818182 0 0 1 5.538628,-5.568831 5.7272725,5.4818182 0 0 1 5.908213,5.209236 5.7272725,5.4818182 0 0 1 -5.344879,5.739658 L 31.09091,38.045452 Z" />
+            </g>
+            <g />
+            <rect class="darkColorFill"
+                style="fill:#235b3a;fill-opacity:1;stroke:#235b3a;stroke-width:2.565;stroke-dasharray:none;stroke-opacity:1"
+                id="rect13" width="5.7272749" height="6.8727288" x="27.654543" y="44.018181" ry="0" />
+        </svg>
+    </div>
+
+    <div id="theDoor">
+        <svg width="900" height="1350" viewBox="0 0 300 600" version="1.1" id="svg1door"
+            xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+            <defs id="defs1" />
+            <g id="layer1">
+                <rect style="fill:#bc5fd3;stroke:#235b3a;stroke-width:40.67999471;stroke-dasharray:none" id="rect1"
+                    width="298.99048" height="599.83221" x="0.46283352" y="0.46283352" />
+                <ellipse style="fill:#235b3a;fill-rule:evenodd;stroke-width:0.265;stroke-dasharray:none;fill-opacity:1"
+                    id="path3" cx="219.38309" cy="369.34113" rx="24.99301" ry="23.604509" />
+            </g>
+        </svg>
+    </div>
+    <img id="theCandy" src="./bigreveal.png" class="NONEDISPLAY" />
+
+</body>
+
+</html>

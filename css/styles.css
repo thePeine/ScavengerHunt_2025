@@ -1,0 +1,70 @@
+html {
+    background: lightgray;
+}
+
+.NONEDISPLAY {
+    display: none !important;
+}
+
+body {
+    display: none;
+}
+
+body.bodyLoaded {
+    display: block;
+}
+
+.floatingLock {
+    pointer-events: pointerup;
+}
+
+.floatingLock svg {
+    height: 90px;
+    width: 90px;
+    position: absolute;
+    z-index: 1001;
+}
+
+#theDoor {
+    height: 1350px;
+    width: 900px;
+    position: absolute;
+    left: 450px;
+}
+
+#svgHider {
+    display: none;
+}
+
+.editText {
+    position: absolute;
+    z-index: 99999;
+    font-size: 42px;
+    background: transparent;
+    width: 300px;
+    margin-top: -10px;
+    padding-left: 10px;
+    left: 1600px;
+    background: black;
+}
+
+.floatingKey {
+    display: none;
+}
+
+.floatingKey.keyisactive {
+    display: block;
+}
+
+.floatingKey svg {
+    height: 70px;
+    width: 90px;
+    position: absolute;
+    z-index: 1001;
+}
+
+#theCandy {
+    width: 900px;
+    position: absolute;
+    left: 450px;
+}

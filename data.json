@@ -1,0 +1,70 @@
+{
+  "locks": [
+    {
+      "Name": "lightGreenLock",
+      "StartX": 340,
+      "StartY": 50,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "Field Goal",
+      "DarkColor": "#235b3a",
+      "LightColor": "#2aff80"
+    },
+    {
+      "Name": "orangeLock",
+      "StartX": 320,
+      "StartY": 275,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "leela",
+      "LightColor": "gold",
+      "DarkColor": "orange"
+    },
+    {
+      "Name": "tealLock",
+      "StartX": 300,
+      "StartY": 500,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "parade",
+      "DarkColor": "black",
+      "LightColor": "teal"
+    },
+    {
+      "Name": "pinkLock",
+      "StartX": 340,
+      "StartY": 725,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "67",
+      "DarkColor": "red",
+      "LightColor": "pink"
+    },
+    {
+      "Name": "brownLock",
+      "StartX": 320,
+      "StartY": 950,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "star",
+      "DarkColor": "brown",
+      "LightColor": "#C4A484"
+    },
+    {
+      "Name": "purlpeLock",
+      "StartX": 300,
+      "StartY": 1175,
+      "NumLinks": 20,
+      "KeyShown": false,
+      "IsLocked": true,
+      "CorrectCode": "fall",
+      "DarkColor": "purple",
+      "LightColor": "#C3B1E1"
+    }
+  ]
+}
