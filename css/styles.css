@@ -63,8 +63,12 @@ body.bodyLoaded {
     z-index: 1001;
 }
 
-#theCandy {
+#bigReveal {
     width: 900px;
+    height: 1350px;
+    line-height: 64px;
     position: absolute;
     left: 450px;
+    font-size: 64px;
+    overflow: hidden;
 }

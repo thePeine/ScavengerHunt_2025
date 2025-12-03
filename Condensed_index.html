@@ -143,10 +143,14 @@
             z-index: 1001;
         }
 
-        #theCandy {
+        #bigReveal {
             width: 900px;
+            height: 1350px;
+            line-height: 64px;
             position: absolute;
             left: 450px;
+            font-size: 64px;
+            overflow: hidden;
         }
     </style>
 
@@ -212,7 +216,7 @@
                         this.angleY -= .5;
                         if (this.angleY <= -90) {
                             this.isDone = true;
-                            var candyElement = document.getElementById("theCandy");
+                            var candyElement = document.getElementById("bigReveal");
                             candyElement.className = "animate__animated animate__backInDown"
                         }
                     }
@@ -777,7 +781,9 @@
             </g>
         </svg>
     </div>
-    <img id="theCandy" src="./bigreveal.png" class="NONEDISPLAY" />
+    <div id="bigReveal" class="NONEDISPLAY">
+        <p>LOOK IN THE OFFICE.  IT MIGHT BE WHERE YOU DON'T EXPECT IT!</p>
+    </div>
 
 </body>
 

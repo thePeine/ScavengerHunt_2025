@@ -57,7 +57,7 @@ function createCanvasDoor() {
                 this.angleY -= .5;
                 if (this.angleY <= -90) {
                     this.isDone = true;
-                    var candyElement = document.getElementById("theCandy");
+                    var candyElement = document.getElementById("bigReveal");
                     candyElement.className = "animate__animated animate__backInDown"
                 }
             }
